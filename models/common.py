@@ -168,7 +168,7 @@ class ConvLSTM(nn.Module):
         while input_tensor.size()[0]<time_series:
             input_tensor=torch.cat((input_tensor,input_tensor))
 
-        time_input_tensor = torch.zeros((batch_size,time_series,input_tensor.size()[1],input_tensor.size()[2],input_tensor.size()[3]), dtype=torch.half).to(input_tensor.device)
+        time_input_tensor = torch.zeros((batch_size,time_series,input_tensor.size()[1],input_tensor.size()[2],input_tensor.size()[3]), dtype=torch.half, device = input_tensor.device)
 
         for i in range(0,batch_size):
             if i+time_series<batch_size:
@@ -178,7 +178,7 @@ class ConvLSTM(nn.Module):
             else:
                 time_input_tensor[i] = input_tensor[-1-time_series:-1]
 
-        input_tensor = time_input_tensor 
+        input_tensor = time_input_tensor.half()
 
         del time_input_tensor
 
