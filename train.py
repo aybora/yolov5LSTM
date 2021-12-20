@@ -363,7 +363,6 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                                            save_dir=save_dir,
                                            plots=False,
                                            callbacks=callbacks,
-                                           half=False,
                                            compute_loss=compute_loss)
 
             # Update best mAP
@@ -428,7 +427,6 @@ def train(hyp,  # path/to/hyp.yaml or hyp dictionary
                                             verbose=True,
                                             plots=True,
                                             callbacks=callbacks,
-                                            half=False,
                                             compute_loss=compute_loss)  # val best model with plots
                     if is_coco:
                         callbacks.run('on_fit_epoch_end', list(mloss) + list(results) + lr, epoch, best_fitness, fi)
