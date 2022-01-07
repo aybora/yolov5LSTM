@@ -249,25 +249,19 @@ class Conv(nn.Module):
         return self.act(self.bn(self.conv(x)))
 
     def forward_fuse(self, x):
-        return self.act(self.conv(x))
+        return self.act(self.conv(x))       
 
 class ConvLSTMLayer(nn.Module):
-    # Standard convolution
+    # Standard convolutional lstm
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, act=True):  # ch_in, ch_out, kernel, stride, padding, groups
         super().__init__()
         self.convlstm = ConvLSTM(c1, c2, (k, k), 1)
-        self.bn = nn.BatchNorm2d(c2)
-        self.act = nn.SiLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+        self.conv = Conv(4 * c2, c2, k, s)
 
     def forward(self, x):
         a=self.convlstm(x)[0][0]
-        a=a.view(-1,a.size()[1]*a.size()[2], a.size()[3],a.size()[4])
-        return self.act(self.bn(a))
-
-    def forward_fuse(self, x):
-        a=self.convlstm(x)[0][0]
-        a=a.view(-1,a.size()[1]*a.size()[2], a.size()[3],a.size()[4])
-        return self.act(a)
+        a=a.view(-1, a.size()[1] * a.size()[2], a.size()[3], a.size()[4])
+        return self.conv(a)
 
 
 class DWConv(Conv):
