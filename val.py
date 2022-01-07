@@ -32,6 +32,7 @@ from utils.general import (LOGGER, box_iou, check_dataset, check_img_size, check
 from utils.metrics import ConfusionMatrix, ap_per_class
 from utils.plots import output_to_target, plot_images, plot_val_study
 from utils.torch_utils import select_device, time_sync
+from torch.cuda.amp import autocast
 
 
 def save_one_txt(predn, save_conf, shape, file):
@@ -177,7 +178,8 @@ def run(data,
         dt[0] += t2 - t1
 
         # Inference
-        out, train_out = model(im) if training else model(im, augment=augment, val=True)  # inference, loss outputs
+        with autocast(): 
+            out, train_out = model(im) if training else model(im, augment=augment, val=True)  # inference, loss outputs
         dt[1] += time_sync() - t2
 
         # Loss
