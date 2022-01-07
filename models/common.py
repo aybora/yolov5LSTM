@@ -249,6 +249,24 @@ class Conv(nn.Module):
     def forward_fuse(self, x):
         return self.act(self.conv(x))
 
+class ConvLSTM(nn.Module):
+    # Standard convolution
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, act=True):  # ch_in, ch_out, kernel, stride, padding, groups
+        super().__init__()
+        self.convlstm = ConvLSTM(c1, c2, (3, 3), 1)
+        self.bn = nn.BatchNorm2d(c2)
+        self.act = nn.SiLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+
+    def forward(self, x):
+        a=self.convlstm(x)[0][0]
+        a=a.view(-1,a.size()[1]*a.size()[2], a.size()[3],a.size()[4])
+        return self.act(self.bn(a))
+
+    def forward_fuse(self, x):
+        a=self.convlstm(x)[0][0]
+        a=a.view(-1,a.size()[1]*a.size()[2], a.size()[3],a.size()[4])
+        return self.act(a)
+
 
 class DWConv(Conv):
     # Depth-wise convolution class
