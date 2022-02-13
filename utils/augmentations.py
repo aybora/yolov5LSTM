@@ -161,9 +161,11 @@ def random_perspective(self, im, targets=(), segments=(), degrees=10, translate=
         # Combined rotation matrix
         M = T @ S @ R @ P @ C  # order of operations (right to left) is IMPORTANT
         self.persM = M
+        self.perss = s
     else:
         M = self.persM
-        
+        s = self.perss
+
     if (border[0] != 0) or (border[1] != 0) or (M != np.eye(3)).any():  # image changed
         if perspective:
             im = cv2.warpPerspective(im, M, dsize=(width, height), borderValue=(114, 114, 114))
