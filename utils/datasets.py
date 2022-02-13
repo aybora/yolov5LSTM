@@ -601,14 +601,18 @@ class LoadImagesAndLabels(Dataset):
             # HSV color-space
             augment_hsv(img, hgain=hyp['hsv_h'], sgain=hyp['hsv_s'], vgain=hyp['hsv_v'])
 
+            if int(hyp['time_seq'])==0 or self.temporal_count-1 == 0:
+                self.rand_ud = random.random()
+                self.rand_lr = random.random()
+
             # Flip up-down
-            if random.random() < hyp['flipud']:
+            if self.rand_ud < hyp['flipud']:
                 img = np.flipud(img)
                 if nl:
                     labels[:, 2] = 1 - labels[:, 2]
 
             # Flip left-right
-            if random.random() < hyp['fliplr']:
+            if self.rand_lr < hyp['fliplr']:
                 img = np.fliplr(img)
                 if nl:
                     labels[:, 1] = 1 - labels[:, 1]
@@ -753,10 +757,10 @@ def load_mosaic_temporal(self, index):
     else:
         yc, xc = self.yc_temp, self.xc_temp
         indices = self.indices_temp
-    self.temporal_count += 1
 
     indices[1:] = [ind+self.temporal_count for ind in indices[1:]]
     indices[:] = [self.n-1 if num >= self.n else num for num in indices]
+    
     for i, index in enumerate(indices):
         # Load image
         img, _, (h, w) = load_image(self, index)
@@ -796,14 +800,14 @@ def load_mosaic_temporal(self, index):
 
     # Augment
     img4, labels4, segments4 = copy_paste(img4, labels4, segments4, p=self.hyp['copy_paste'])
-    img4, labels4 = random_perspective(img4, labels4, segments4,
+    img4, labels4 = random_perspective(self, img4, labels4, segments4,
                                        degrees=self.hyp['degrees'],
                                        translate=self.hyp['translate'],
                                        scale=self.hyp['scale'],
                                        shear=self.hyp['shear'],
                                        perspective=self.hyp['perspective'],
                                        border=self.mosaic_border)  # border to remove
-
+    self.temporal_count += 1
     return img4, labels4
 
 
