@@ -277,9 +277,9 @@ class Conv3D(nn.Module):
         while x.size()[0]<time_series:
             x=torch.cat((x,x))
 
-        cuda = x.device.type != 'cpu'
+        half = x.dtype != torch.float
 
-        dtype = torch.half if cuda else torch.float
+        dtype = torch.half if half else torch.float
 
         time_input_tensor = torch.zeros((batch_size,time_series,x.size()[1],x.size()[2],x.size()[3]), dtype=dtype, device = x.device)
 
@@ -291,18 +291,11 @@ class Conv3D(nn.Module):
             else:
                 time_input_tensor[i] = x[-1-time_series:-1]
 
-        x = time_input_tensor.half() if cuda else time_input_tensor
+        x = time_input_tensor.half() if half else time_input_tensor
 
         del time_input_tensor
 
         x = x.permute(0,2,3,4,1).reshape((x.shape[0],x.shape[2],x.shape[3],x.shape[4]*x.shape[1]))
-
-        if cuda:
-            self.conv1 = self.conv1.half()
-            self.conv2 = self.conv2.half()
-            self.conv3 = self.conv3.half()
-            self.conv4 = self.conv4.half()
-            self.conv5 = self.conv5.half()
 
         return self.conv5(self.conv4(self.conv3(self.conv2(self.conv1(x)))))   
 
