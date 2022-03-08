@@ -269,22 +269,6 @@ class Conv3D(nn.Module):
         s=stride
         self.conv5 = Conv(2*c2, c2, k, s)
 
-        """ self.conv1 = nn.Conv2d(c1, c2, k, s, autopad(k, p), groups=g, bias=False)
-        self.bn1 = nn.BatchNorm2d(c2)
-        self.conv2 = nn.Conv2d(c2, 2*c2, k, s, autopad(k, p), groups=g, bias=False)
-        self.bn2 = nn.BatchNorm2d(2*c2)
-        self.conv3 = nn.Conv2d(2*c2, c2, k, s, autopad(k, p), groups=g, bias=False)
-        self.bn3 = nn.BatchNorm2d(c2)
-        k=3
-        s=(1,4)
-        self.conv4 = nn.Conv2d(c2, 2*c2, k, s, autopad(k, p), groups=g, bias=False)
-        self.bn4 = nn.BatchNorm2d(2*c2)
-        k=1
-        s=1
-        self.conv5 = nn.Conv2d(2*c2, c2, k, s, autopad(k, p), groups=g, bias=False)
-        self.bn5 = nn.BatchNorm2d(c2)
-        self.act = nn.SiLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity()) """
-
     def forward(self, x):
         batch_size = x.size()[0]
 
@@ -313,11 +297,12 @@ class Conv3D(nn.Module):
 
         x = x.permute(0,2,3,4,1).reshape((x.shape[0],x.shape[2],x.shape[3],x.shape[4]*x.shape[1]))
 
-        """ x=self.act(self.bn1(self.conv1(x))) 
-        x=self.act(self.bn2(self.conv2(x))) 
-        x=self.act(self.bn3(self.conv3(x))) 
-        x=self.act(self.bn4(self.conv4(x))) 
-        x=self.act(self.bn5(self.conv5(x))) """
+        if cuda:
+            self.conv1 = self.conv1.half()
+            self.conv2 = self.conv2.half()
+            self.conv3 = self.conv3.half()
+            self.conv4 = self.conv4.half()
+            self.conv5 = self.conv5.half()
 
         return self.conv5(self.conv4(self.conv3(self.conv2(self.conv1(x)))))   
 
