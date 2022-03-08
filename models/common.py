@@ -249,7 +249,61 @@ class Conv(nn.Module):
         return self.act(self.bn(self.conv(x)))
 
     def forward_fuse(self, x):
-        return self.act(self.conv(x))       
+        return self.act(self.conv(x))   
+
+class Conv3D(nn.Module):
+    # Standard convolution
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, act=True):  # ch_in, ch_out, kernel, stride, padding, groups
+        super().__init__()
+        k=(3,6) 
+        s=1
+        self.conv1 = nn.Conv2d(c1, c2, k, s, autopad(k, p), groups=g, bias=False)
+        self.bn1 = nn.BatchNorm2d(c2)
+        self.conv2 = nn.Conv2d(c2, 2*c2, k, s, autopad(k, p), groups=g, bias=False)
+        self.bn2 = nn.BatchNorm2d(2*c2)
+        self.conv3 = nn.Conv2d(2*c2, c2, k, s, autopad(k, p), groups=g, bias=False)
+        self.bn3 = nn.BatchNorm2d(c2)
+        k=3
+        s=(1,4)
+        self.conv4 = nn.Conv2d(c2, 2*c2, k, s, autopad(k, p), groups=g, bias=False)
+        self.bn4 = nn.BatchNorm2d(2*c2)
+        k=1
+        s=1
+        self.conv5 = nn.Conv2d(2*c2, c2, k, s, autopad(k, p), groups=g, bias=False)
+        self.bn5 = nn.BatchNorm2d(c2)
+        self.act = nn.SiLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+
+    def forward(self, x):
+        batch_size = x.size()[0]
+
+        time_series = 4
+
+        while x.size()[0]<time_series:
+            x=torch.cat((x,x))
+
+        time_input_tensor = torch.zeros((batch_size,time_series,x.size()[1],x.size()[2],x.size()[3]), dtype=torch.half, device = x.device)
+
+        for i in range(0,batch_size):
+            if i+time_series<batch_size:
+                time_input_tensor[i] = x[i:i+4]
+            elif x.size()[0]==time_series:
+                time_input_tensor[i] = x
+            else:
+                time_input_tensor[i] = x[-1-time_series:-1]
+
+        x = time_input_tensor.half()
+
+        del time_input_tensor
+
+        x = x.permute(0,2,3,4,1).reshape((x.shape[0],x.shape[2],x.shape[3],x.shape[4]*x.shape[1]))
+
+        x=self.act(self.bn1(self.conv1(x))) 
+        x=self.act(self.bn2(self.conv2(x))) 
+        x=self.act(self.bn3(self.conv3(x))) 
+        x=self.act(self.bn4(self.conv4(x))) 
+        x=self.act(self.bn5(self.conv5(x)))
+
+        return x   
 
 class ConvLSTMLayer(nn.Module):
     # Standard convolutional lstm
